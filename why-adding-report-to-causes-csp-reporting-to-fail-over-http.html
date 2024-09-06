@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="generator" content="Pelican" />
+        <title>Why adding report-to causes CSP reporting to fail over HTTP</title>
+        <link rel="stylesheet" href="https://blog.stepaheadcyber.com/theme/css/main.css" />
+        <link href="https://blog.stepaheadcyber.com/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Yaakov Saxon's Security Blog Atom Feed" />
+        <meta name="description" content="I recently was trying to improve the CSP headers on an application, so I get it set up running over http on localhost. I noticed very strangely..." />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="https://blog.stepaheadcyber.com/">Yaakov Saxon's Security Blog</a></h1>
+                <nav><ul>
+                    <li class="active"><a href="https://blog.stepaheadcyber.com/category/curiousities.html">Curiousities</a></li>
+                    <li><a href="https://blog.stepaheadcyber.com/category/hacking.html">Hacking</a></li>
+                    <li><a href="https://blog.stepaheadcyber.com/category/misc.html">Misc</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="https://blog.stepaheadcyber.com/why-adding-report-to-causes-csp-reporting-to-fail-over-http.html" rel="bookmark"
+           title="Permalink to Why adding report-to causes CSP reporting to fail over HTTP">Why adding report-to causes CSP reporting to fail over HTTP</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2024-08-06T00:00:00-04:00">
+                Published: Tue 06 August 2024
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="https://blog.stepaheadcyber.com/author/yaakov-saxon.html">Yaakov Saxon</a>
+        </address>
+<p>In <a href="https://blog.stepaheadcyber.com/category/curiousities.html">Curiousities</a>.</p>
+
+</footer><!-- /.post-info -->      <p>I recently was trying to improve the CSP headers on an application, so I get it set up running over http on localhost. I noticed very strangely that the policy itself worked fine, and reports were sent when I only included the older report-uri field. But if I included the newer report-to field in the CSP header, then although the CSP violations continued to be noted in the browser console, they were not sent to the reporting endpoint.</p>
+<p>It turns out that the HTTP is the problem.</p>
+<p>CSP headers are supported over HTTP (which is why the policy itself works) as are both the report-uri and report-to syntaxes, but the newer headers that define report-to endpoints are NOT supported under HTTP.</p>
+<ul>
+<li>A browser that supports the newer report-to syntax will always use that in preference to the older report-uri syntax</li>
+<li>
+<ul>
+<li>It only falls back to report-uri if there is no report-to specified (or if the browser doesn't support report-to)</li>
+</ul>
+</li>
+<li>
+<ul>
+<li>If report-to is specified and supported, but the endpoint group is not defined, the report will simply fail</li>
+</ul>
+</li>
+<li>The headers that define the report-to endpoint groups (there are actually two, the never fully implemented and now deprecated Report-To, and the even newer Reporting-Endpoints) are only parsed over HTTPS</li>
+<li>So the browser will see the report-to specification and decide to send to an endpoint group by that name, but that endpoint group will not be defined, and the report will fail</li>
+</ul>
+<p>You can see this in Chrome by going to DevTools -&gt; Application -&gt; Reporting API. You will see no endpoint groups defined if you are running over HTTP, and the report will stay listed as queued.
+(Note that the Endpoints list does not seem to populate with the Report-To header, only the Reporting-Endpoints header even over HTTPS, but even with Report-To you will see that the report is eventually sent if you are running over HTTPS)</p>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+                            <li><a href="https://blog.stepaheadcyber.com/feeds/all.atom.xml" type="application/atom+xml" rel="alternate">atom feed</a></li>
+
+                            <li><a href="https://www.linkedin.com/in/ysaxon/"></a></li>
+                            <li><a href="https://github.com/YSaxon"></a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>
